@@ -1,21 +1,23 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Plus, Edit, Trash2, Eye } from 'lucide-react';
-import { useApplications } from '../hooks/useApplications';
-import { LoadingSpinner } from '../components/LoadingSpinner';
-import { ErrorMessage } from '../components/ErrorMessage';
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { Plus, Edit, Trash2, ListCollapse } from "lucide-react";
+import { useApplications } from "../hooks/useApplications";
+import { LoadingSpinner } from "../components/LoadingSpinner";
+import { ErrorMessage } from "../components/ErrorMessage";
 
 export function ApplicationsPage() {
   const { applications, loading, error, deleteApplication } = useApplications();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleDelete = async (id: string, nom: string) => {
-    if (confirm(`Êtes-vous sûr de vouloir supprimer l'application "${nom}" ?`)) {
+    if (
+      confirm(`Êtes-vous sûr de vouloir supprimer l'application "${nom}" ?`)
+    ) {
       try {
         setDeletingId(id);
         await deleteApplication(id);
       } catch (err) {
-        alert('Erreur lors de la suppression');
+        alert("Erreur lors de la suppression");
       } finally {
         setDeletingId(null);
       }
@@ -81,15 +83,17 @@ export function ApplicationsPage() {
               {applications.map((app) => (
                 <tr key={app.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{app.nom}</div>
+                    <div className="text-sm font-medium text-gray-900">
+                      {app.nom}
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm text-gray-600 max-w-xs truncate">
-                      {app.description || '-'}
+                      {app.description || "-"}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(app.created_at).toLocaleDateString('fr-FR')}
+                    {new Date(app.created_at).toLocaleDateString("fr-FR")}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end space-x-2">
@@ -98,7 +102,7 @@ export function ApplicationsPage() {
                         className="text-blue-600 hover:text-blue-900 p-1"
                         title="Voir les fonctionnalités"
                       >
-                        <Eye className="h-4 w-4" />
+                        <ListCollapse className="h-4 w-4" />
                       </Link>
                       <Link
                         to={`/applications/${app.id}/edit`}
