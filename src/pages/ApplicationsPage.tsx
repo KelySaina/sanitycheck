@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Edit, Trash2, ListCollapse } from "lucide-react";
+import { Plus, Edit, Trash2, ListCollapse, AppWindow } from "lucide-react";
 import { useApplications } from "../hooks/useApplications";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ErrorMessage } from "../components/ErrorMessage";
@@ -39,7 +39,10 @@ export function ApplicationsPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900">Applications</h1>
+        <h1 className="text-3xl font-bold text-gray-900">
+          <AppWindow className="inline-block h-8 w-8 mr-2 text-gray-900" />
+          Applications
+        </h1>
         <Link
           to="/applications/new"
           className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"

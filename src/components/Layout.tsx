@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Activity, Home, Settings, Users, LogOut } from "lucide-react";
+import { Activity, Home, AppWindow, LogOut, ListChecks } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
 interface LayoutProps {
@@ -40,7 +40,7 @@ export function Layout({ children }: LayoutProps) {
                   to="/"
                   className={`inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 transition-colors ${
                     isActive("/") && location.pathname === "/"
-                      ? "border-blue-500 text-gray-900"
+                      ? "border-blue-500 text-blue-600"
                       : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                   }`}
                 >
@@ -51,22 +51,22 @@ export function Layout({ children }: LayoutProps) {
                   to="/applications"
                   className={`inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 transition-colors ${
                     isActive("/applications")
-                      ? "border-blue-500 text-gray-900"
+                      ? "border-blue-500 text-blue-600"
                       : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                   }`}
                 >
-                  <Users className="h-4 w-4 mr-1" />
+                  <AppWindow className="h-4 w-4 mr-1" />
                   Applications
                 </Link>
                 <Link
                   to="/sanity-checks"
                   className={`inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 transition-colors ${
                     isActive("/sanity-checks")
-                      ? "border-blue-500 text-gray-900"
+                      ? "border-blue-500 text-blue-600"
                       : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                   }`}
                 >
-                  <Settings className="h-4 w-4 mr-1" />
+                  <ListChecks className="h-4 w-4 mr-1" />
                   Sanity Checks
                 </Link>
               </div>
