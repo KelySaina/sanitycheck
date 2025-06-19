@@ -4,6 +4,7 @@ import { useSanityChecks } from "../hooks/useSanityChecks";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ErrorMessage } from "../components/ErrorMessage";
 import { StatusBadge } from "../components/StatusBadge";
+import { useRef } from "react";
 
 export function SanityChecksPage() {
   const { sanityChecks, loading, error, deleteSanityCheck } = useSanityChecks();
@@ -29,9 +30,29 @@ export function SanityChecksPage() {
     )
   );
 
-  const uniqueFonctionnalites = Array.from(
-    new Set(sanityChecks.map((c) => c.fonctionnalites?.nom).filter(Boolean))
-  );
+  const fonctionnalitesByApp: Record<string, Set<string>> = {};
+
+  sanityChecks.forEach((check) => {
+    const app = check.fonctionnalites?.applications?.nom || "ALL";
+    const fn = check.fonctionnalites?.nom;
+    if (app && fn) {
+      if (!fonctionnalitesByApp[app]) {
+        fonctionnalitesByApp[app] = new Set();
+      }
+      fonctionnalitesByApp[app].add(fn);
+    }
+  });
+
+  const fonctionnalitesOptions =
+    appFilter === "ALL"
+      ? Array.from(
+          new Set(
+            Object.values(fonctionnalitesByApp).flatMap((set) =>
+              Array.from(set)
+            )
+          )
+        )
+      : Array.from(fonctionnalitesByApp[appFilter] || []);
 
   // Appliquer les filtres combinés
   const filteredChecks = sanityChecks.filter((check) => {
@@ -63,6 +84,30 @@ export function SanityChecksPage() {
   });
 
   const visibleChecks = filteredChecks.slice(0, visibleCount);
+
+  // In your component:
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const handleScroll = () => {
+      const nearBottom =
+        el.scrollTop + el.clientHeight >= el.scrollHeight - 100;
+
+      if (nearBottom && visibleCount < filteredChecks.length) {
+        setVisibleCount((count) => count + 20);
+      }
+    };
+
+    el.addEventListener("scroll", handleScroll);
+    return () => el.removeEventListener("scroll", handleScroll);
+  }, [visibleCount, filteredChecks.length]);
+
+  useEffect(() => {
+    setFonctionnaliteFilter("ALL");
+  }, [appFilter]);
 
   const resetFilters = () => {
     setStatusFilter("ALL");
@@ -97,20 +142,6 @@ export function SanityChecksPage() {
   if (error) {
     return <ErrorMessage message={error} />;
   }
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const bottomReached =
-        window.innerHeight + window.scrollY >= document.body.offsetHeight - 200;
-
-      if (bottomReached && visibleCount < filteredChecks.length) {
-        setVisibleCount((count) => count + 20);
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [visibleCount, filteredChecks.length]);
 
   return (
     <div className="space-y-6">
@@ -193,7 +224,7 @@ export function SanityChecksPage() {
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="ALL">Toutes</option>
-              {uniqueFonctionnalites.map((fn) => (
+              {fonctionnalitesOptions.map((fn) => (
                 <option key={fn} value={fn}>
                   {fn}
                 </option>
@@ -256,7 +287,7 @@ export function SanityChecksPage() {
         </div>
       ) : (
         <div className="bg-white rounded-lg shadow-md">
-          <div className="h-[400px] overflow-y-auto">
+          <div ref={scrollRef} className="h-[400px] overflow-y-auto">
             <table className="min-w-full table-fixed divide-y divide-gray-200">
               <thead className="bg-gray-50 sticky top-0 z-10">
                 <tr>
