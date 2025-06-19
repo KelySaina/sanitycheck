@@ -28,7 +28,7 @@ export function ApplicationDetailPage() {
   const [addingCheckId, setAddingCheckId] = useState<string | null>(null);
 
   const [commentFonctId, setCommentFonctId] = useState<string | null>(null);
-  const [comment, setComment] = useState<string>("PROD");
+  const [comment, setComment] = useState<string>("PROD -Thierry");
   const [commentStatus, setCommentStatus] = useState<"OK" | "NOT_OK" | null>(
     null
   );
@@ -63,7 +63,7 @@ export function ApplicationDetailPage() {
     } finally {
       setAddingCheckId(null);
       setCommentFonctId(null);
-      setComment("PROD");
+      setComment("PROD -Thierry");
       setCommentStatus(null);
     }
   };
@@ -224,7 +224,7 @@ export function ApplicationDetailPage() {
                             onClick={() => {
                               setCommentFonctId(fonct.id);
                               setCommentStatus("OK");
-                              setComment("PROD");
+                              setComment("PROD -Thierry");
                             }}
                             disabled={addingCheckId === fonct.id}
                             className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded hover:bg-green-200 transition-colors"
@@ -242,7 +242,7 @@ export function ApplicationDetailPage() {
                             onClick={() => {
                               setCommentFonctId(fonct.id);
                               setCommentStatus("NOT_OK");
-                              setComment("PROD");
+                              setComment("PROD -Thierry");
                             }}
                             disabled={addingCheckId === fonct.id}
                             className="inline-flex items-center px-2 py-1 bg-red-100 text-red-800 text-xs rounded hover:bg-red-200 transition-colors"
@@ -271,7 +271,7 @@ export function ApplicationDetailPage() {
                                 className="text-gray-500 hover:text-gray-700 text-sm"
                                 onClick={() => {
                                   setCommentFonctId(null);
-                                  setComment("PROD");
+                                  setComment("PROD -Thierry");
                                 }}
                               >
                                 Annuler
