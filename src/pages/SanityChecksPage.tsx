@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Filter, Calendar, Trash2, ListChecks } from "lucide-react";
 import { useSanityChecks } from "../hooks/useSanityChecks";
 import { LoadingSpinner } from "../components/LoadingSpinner";
@@ -18,6 +18,7 @@ export function SanityChecksPage() {
   const [dateFilter, setDateFilter] = useState<string>("");
   const [startDateFilter, setStartDateFilter] = useState<string>("");
   const [endDateFilter, setEndDateFilter] = useState<string>("");
+  const [visibleCount, setVisibleCount] = useState(20);
 
   // Extraire dynamiquement la liste des applications et fonctionnalités uniques
   const uniqueApps = Array.from(
@@ -61,6 +62,8 @@ export function SanityChecksPage() {
     return matchStatus && matchApp && matchFonctionnalite && matchDate;
   });
 
+  const visibleChecks = filteredChecks.slice(0, visibleCount);
+
   const resetFilters = () => {
     setStatusFilter("ALL");
     setAppFilter("ALL");
@@ -94,6 +97,20 @@ export function SanityChecksPage() {
   if (error) {
     return <ErrorMessage message={error} />;
   }
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const bottomReached =
+        window.innerHeight + window.scrollY >= document.body.offsetHeight - 200;
+
+      if (bottomReached && visibleCount < filteredChecks.length) {
+        setVisibleCount((count) => count + 20);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [visibleCount, filteredChecks.length]);
 
   return (
     <div className="space-y-6">
@@ -261,7 +278,7 @@ export function SanityChecksPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredChecks.map((check) => (
+                {visibleChecks.map((check) => (
                   <tr key={check.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 text-sm font-medium text-gray-900">
                       {check.fonctionnalites?.nom || "Fonctionnalité supprimée"}
