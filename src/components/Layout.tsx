@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Activity, Home, AppWindow, LogOut, ListChecks } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
@@ -90,6 +90,7 @@ export function Layout({ children }: LayoutProps) {
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {children}
       </main>
+      <Outlet />
     </div>
   );
 }
