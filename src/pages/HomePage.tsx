@@ -5,6 +5,8 @@ import { useSanityChecks } from "../hooks/useSanityChecks";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ErrorMessage } from "../components/ErrorMessage";
 import { StatusBadge } from "../components/StatusBadge";
+import { useFonctionnalites } from "../hooks/useFonctionnalites";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 
 export function HomePage() {
   const {
@@ -13,8 +15,31 @@ export function HomePage() {
     error: errorApps,
   } = useApplications();
   const { sanityChecks, loading: loadingChecks } = useSanityChecks();
+  const { fonctionnalites, loading: loadingFonctionnalites } =
+    useFonctionnalites();
+
+  const today = new Date().toISOString().split("T")[0]; // yyyy-mm-dd
+
+  const todaysChecksByFunctionality = sanityChecks.reduce((acc, check) => {
+    const checkDate = new Date(check.date_verification)
+      .toISOString()
+      .split("T")[0];
+    if (checkDate === today) {
+      const funcId = check.fonctionnalites.id;
+      acc[funcId] = check;
+    }
+    return acc;
+  }, {} as Record<string, (typeof sanityChecks)[number]>);
 
   if (loadingApps) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
+  if (loadingFonctionnalites) {
     return (
       <div className="flex justify-center items-center h-64">
         <LoadingSpinner size="lg" />
@@ -32,6 +57,14 @@ export function HomePage() {
   const notOkCount = recentChecks.filter(
     (check) => check.statut === "NOT_OK"
   ).length;
+
+  const fonctionnalitesParApp: Record<string, typeof fonctionnalites> =
+    fonctionnalites.reduce((acc, f) => {
+      const appId = f.application_id;
+      if (!acc[appId]) acc[appId] = [];
+      acc[appId].push(f);
+      return acc;
+    }, {} as Record<string, typeof fonctionnalites>);
 
   return (
     <div className="space-y-8">
@@ -94,6 +127,20 @@ export function HomePage() {
               Nouvelle application
             </Link>
           </div>
+          <div className="flex justify-center gap-4 mt-4 text-sm">
+            <div className="flex items-center gap-1">
+              <span className="w-3 h-3 rounded-full bg-green-600 inline-block" />
+              <span>OK</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="w-3 h-3 rounded-full bg-red-600 inline-block" />
+              <span>Problème</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="w-3 h-3 rounded-full bg-orange-500 inline-block" />
+              <span>Non vérifiée</span>
+            </div>
+          </div>
           <div className="p-6 overflow-auto">
             {applications.length === 0 ? (
               <div className="text-center py-8">
@@ -119,10 +166,60 @@ export function HomePage() {
                       {app.nom}
                     </h3>
                     {app.description && (
-                      <p className="text-gray-600 mb-4 text-sm">
+                      <p className="text-gray-600 text-sm mb-2">
                         {app.description}
                       </p>
                     )}
+
+                    <ResponsiveContainer width="100%" height={180}>
+                      <PieChart>
+                        <Pie
+                          data={(() => {
+                            const fonctionApp =
+                              fonctionnalitesParApp[app.id] ?? [];
+
+                            const counts = {
+                              OK: 0,
+                              NOT_OK: 0,
+                              NON_VERIFIE: 0,
+                            };
+
+                            fonctionApp.forEach((func) => {
+                              const check =
+                                todaysChecksByFunctionality[func.id];
+                              if (!check) {
+                                counts.NON_VERIFIE++;
+                              } else if (check.statut === "OK") {
+                                counts.OK++;
+                              } else if (check.statut === "NOT_OK") {
+                                counts.NOT_OK++;
+                              }
+                            });
+
+                            return [
+                              { name: "OK", value: counts.OK },
+                              { name: "NOT_OK", value: counts.NOT_OK },
+                              {
+                                name: "Non vérifié",
+                                value: counts.NON_VERIFIE,
+                              },
+                            ];
+                          })()}
+                          dataKey="value"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={50}
+                          label
+                        >
+                          <Cell key="ok" fill="#16a34a" />
+                          <Cell key="not-ok" fill="#dc2626" />
+                          <Cell key="non-verifie" fill="#f97316" />
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+
                     <Link
                       to={`/applications/${app.id}`}
                       className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"

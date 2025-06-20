@@ -16,6 +16,7 @@ import { ErrorMessage } from "../components/ErrorMessage";
 import { StatusBadge } from "../components/StatusBadge";
 
 export function ApplicationDetailPage() {
+  const today = new Date().toISOString().split("T")[0];
   const { id } = useParams<{ id: string }>();
   const { applications, loading: loadingApp } = useApplications();
   const {
@@ -190,8 +191,17 @@ export function ApplicationDetailPage() {
                   return (
                     <tr key={fonct.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {fonct.nom}
+                        <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
+                          {!latestCheck ||
+                          new Date(latestCheck.date_verification)
+                            .toISOString()
+                            .split("T")[0] !== today ? (
+                            <span
+                              className="w-2.5 h-2.5 rounded-full bg-orange-400"
+                              title="Non vérifié aujourd’hui"
+                            />
+                          ) : null}
+                          <span>{fonct.nom}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
