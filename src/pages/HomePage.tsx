@@ -18,28 +18,82 @@ export function HomePage() {
   const { fonctionnalites, loading: loadingFonctionnalites } =
     useFonctionnalites();
 
-  const today = new Date().toISOString().split("T")[0]; // yyyy-mm-dd
+  const today = new Date().toISOString().split("T")[0];
 
-  const todaysChecksByFunctionality = sanityChecks.reduce((acc, check) => {
+  // 1. Trouver le dernier check PAR fonctionnalite ET PAR env (prod/preprod) pour aujourd'hui
+  type CheckType = (typeof sanityChecks)[number];
+  const latestCheckByFuncEnv: Record<
+    string,
+    { prod?: CheckType; preprod?: CheckType }
+  > = {};
+
+  const sortedChecks = [...sanityChecks].sort(
+    (a, b) =>
+      new Date(b.date_verification).getTime() -
+      new Date(a.date_verification).getTime()
+  );
+
+  for (const check of sortedChecks) {
     const checkDate = new Date(check.date_verification)
       .toISOString()
       .split("T")[0];
-    if (checkDate === today) {
-      const funcId = check.fonctionnalites.id;
-      acc[funcId] = check;
-    }
-    return acc;
-  }, {} as Record<string, (typeof sanityChecks)[number]>);
+    if (checkDate !== today) continue;
 
-  if (loadingApps) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
+    const funcId = check.fonctionnalite_id;
+    const comment = (check.commentaire ?? "").toLowerCase();
+    const env = comment.includes("preprod")
+      ? "preprod"
+      : comment.includes("prod")
+      ? "prod"
+      : null;
+    if (!env) continue;
+
+    if (!latestCheckByFuncEnv[funcId]) {
+      latestCheckByFuncEnv[funcId] = {};
+    }
+
+    // Stocker seulement si pas déjà stocké (on part du plus récent donc le premier est le plus récent)
+    if (!latestCheckByFuncEnv[funcId][env]) {
+      latestCheckByFuncEnv[funcId][env] = check;
+    }
   }
 
-  if (loadingFonctionnalites) {
+  // 2. Compter OK / NOT_OK globalement sur tous les derniers checks par fonctionnalité et env
+  let okCount = 0;
+  let notOkCount = 0;
+
+  for (const funcId in latestCheckByFuncEnv) {
+    const envChecks = latestCheckByFuncEnv[funcId];
+    ["prod", "preprod"].forEach((env) => {
+      const check = envChecks[env as "prod" | "preprod"];
+      if (!check) return;
+
+      if (check.statut.trim().toUpperCase() === "OK") okCount++;
+      else if (check.statut.trim().toUpperCase() === "NOT_OK") notOkCount++;
+    });
+  }
+
+  // 3. Préparer recentChecks pour l'affichage (tableau), on aplatie et on trie par date
+  const recentChecks = Object.entries(latestCheckByFuncEnv)
+    .flatMap(([_, envChecks]) =>
+      Object.values(envChecks).filter((c): c is CheckType => !!c)
+    )
+    .sort(
+      (a, b) =>
+        new Date(b.date_verification).getTime() -
+        new Date(a.date_verification).getTime()
+    );
+
+  // 4. Construire map fonctionnalites par application pour affichage détaillé
+  const fonctionnalitesParApp: Record<string, typeof fonctionnalites> =
+    fonctionnalites.reduce((acc, f) => {
+      const appId = f.application_id;
+      if (!acc[appId]) acc[appId] = [];
+      acc[appId].push(f);
+      return acc;
+    }, {} as Record<string, typeof fonctionnalites>);
+
+  if (loadingApps || loadingFonctionnalites || loadingChecks) {
     return (
       <div className="flex justify-center items-center h-64">
         <LoadingSpinner size="lg" />
@@ -51,24 +105,8 @@ export function HomePage() {
     return <ErrorMessage message={errorApps} />;
   }
 
-  // Calculer les statistiques des sanity checks récents
-  const recentChecks = sanityChecks.slice(0, 10);
-  const okCount = recentChecks.filter((check) => check.statut === "OK").length;
-  const notOkCount = recentChecks.filter(
-    (check) => check.statut === "NOT_OK"
-  ).length;
-
-  const fonctionnalitesParApp: Record<string, typeof fonctionnalites> =
-    fonctionnalites.reduce((acc, f) => {
-      const appId = f.application_id;
-      if (!acc[appId]) acc[appId] = [];
-      acc[appId].push(f);
-      return acc;
-    }, {} as Record<string, typeof fonctionnalites>);
-
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="text-center">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">
           Tableau de bord SanityTracker
@@ -81,7 +119,7 @@ export function HomePage() {
       <div className="flex flex-col md:flex-row gap-6">
         {/* Statistiques */}
         <div className="md:w-1/3 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+          <div className="grid grid-cols-1 gap-6">
             <div className="bg-white rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 Applications
@@ -92,7 +130,7 @@ export function HomePage() {
             </div>
             <div className="bg-white rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Checks récents
+                Sanity Checks d'aujourd'hui
               </h3>
               <p className="text-3xl font-bold text-gray-600">
                 {recentChecks.length}
@@ -127,20 +165,6 @@ export function HomePage() {
               Nouvelle application
             </Link>
           </div>
-          <div className="flex justify-center gap-4 mt-4 text-sm">
-            <div className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded-full bg-green-600 inline-block" />
-              <span>OK</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded-full bg-red-600 inline-block" />
-              <span>Problème</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded-full bg-orange-500 inline-block" />
-              <span>Non vérifiée</span>
-            </div>
-          </div>
           <div className="p-6 overflow-auto">
             {applications.length === 0 ? (
               <div className="text-center py-8">
@@ -157,78 +181,105 @@ export function HomePage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {applications.map((app) => (
-                  <div
-                    key={app.id}
-                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-                  >
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      {app.nom}
-                    </h3>
-                    {app.description && (
-                      <p className="text-gray-600 text-sm mb-2">
-                        {app.description}
-                      </p>
-                    )}
+                {applications.map((app) => {
+                  const fonctionApp = fonctionnalitesParApp[app.id] ?? [];
 
-                    <ResponsiveContainer width="100%" height={180}>
-                      <PieChart>
-                        <Pie
-                          data={(() => {
-                            const fonctionApp =
-                              fonctionnalitesParApp[app.id] ?? [];
+                  // compter OK, NOT_OK, NON_VERIFIE par env pour les fonctionnalités de l'app
+                  const countsByEnv = {
+                    prod: { OK: 0, NOT_OK: 0, NON_VERIFIE: 0 },
+                    preprod: { OK: 0, NOT_OK: 0, NON_VERIFIE: 0 },
+                  };
 
-                            const counts = {
-                              OK: 0,
-                              NOT_OK: 0,
-                              NON_VERIFIE: 0,
-                            };
+                  fonctionApp.forEach((func) => {
+                    const checksForFunc = latestCheckByFuncEnv[func.id] ?? {};
 
-                            fonctionApp.forEach((func) => {
-                              const check =
-                                todaysChecksByFunctionality[func.id];
-                              if (!check) {
-                                counts.NON_VERIFIE++;
-                              } else if (check.statut === "OK") {
-                                counts.OK++;
-                              } else if (check.statut === "NOT_OK") {
-                                counts.NOT_OK++;
-                              }
-                            });
+                    ["prod", "preprod"].forEach((env) => {
+                      const check = checksForFunc[env as "prod" | "preprod"];
+                      if (!check) {
+                        countsByEnv[env].NON_VERIFIE++;
+                      } else {
+                        if (check.statut.trim().toUpperCase() === "OK")
+                          countsByEnv[env].OK++;
+                        else if (check.statut.trim().toUpperCase() === "NOT_OK")
+                          countsByEnv[env].NOT_OK++;
+                        else countsByEnv[env].NON_VERIFIE++; // fallback
+                      }
+                    });
+                  });
 
-                            return [
-                              { name: "OK", value: counts.OK },
-                              { name: "NOT_OK", value: counts.NOT_OK },
-                              {
-                                name: "Non vérifié",
-                                value: counts.NON_VERIFIE,
-                              },
-                            ];
-                          })()}
-                          dataKey="value"
-                          nameKey="name"
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={50}
-                          label
-                        >
-                          <Cell key="ok" fill="#16a34a" />
-                          <Cell key="not-ok" fill="#dc2626" />
-                          <Cell key="non-verifie" fill="#f97316" />
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
+                  const getPieData = (env: "prod" | "preprod") => [
+                    {
+                      name: "OK",
+                      value: countsByEnv[env].OK,
+                      color: "#16a34a",
+                    },
+                    {
+                      name: "NOT_OK",
+                      value: countsByEnv[env].NOT_OK,
+                      color: "#dc2626",
+                    },
+                    {
+                      name: "Non vérifié",
+                      value: countsByEnv[env].NON_VERIFIE,
+                      color: "#f97316",
+                    },
+                  ];
 
-                    <Link
-                      to={`/applications/${app.id}`}
-                      className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
+                  return (
+                    <div
+                      key={app.id}
+                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
                     >
-                      Voir les fonctionnalités
-                      <ArrowRight className="h-4 w-4 ml-1" />
-                    </Link>
-                  </div>
-                ))}
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        {app.nom}
+                      </h3>
+                      {app.description && (
+                        <p className="text-gray-600 text-sm mb-4">
+                          {app.description}
+                        </p>
+                      )}
+
+                      <div className="flex flex-col items-center gap-4">
+                        {["prod", "preprod"].map((env) => (
+                          <div key={env} className="w-1/2">
+                            <h4 className="text-sm font-medium text-center text-gray-700 mb-2 uppercase">
+                              {env}
+                            </h4>
+                            <ResponsiveContainer width="100%" height={180}>
+                              <PieChart>
+                                <Pie
+                                  data={getPieData(env)}
+                                  dataKey="value"
+                                  nameKey="name"
+                                  cx="50%"
+                                  cy="50%"
+                                  outerRadius={50}
+                                  label
+                                >
+                                  {getPieData(env).map((entry, index) => (
+                                    <Cell
+                                      key={`cell-${index}`}
+                                      fill={entry.color}
+                                    />
+                                  ))}
+                                </Pie>
+                                <Tooltip />
+                              </PieChart>
+                            </ResponsiveContainer>
+                          </div>
+                        ))}
+                      </div>
+
+                      <Link
+                        to={`/applications/${app.id}`}
+                        className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium mt-4"
+                      >
+                        Voir les fonctionnalités
+                        <ArrowRight className="h-4 w-4 ml-1" />
+                      </Link>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -240,11 +291,10 @@ export function HomePage() {
         <div className="bg-white rounded-lg shadow-md">
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-xl font-semibold text-gray-900">
-              Sanity Checks récents
+              Sanity Checks d'aujourd'hui
             </h2>
           </div>
           <div className="p-6">
-            {/* Conteneur scrollable */}
             <div className="max-h-96 overflow-y-auto space-y-4">
               {recentChecks.map((check) => (
                 <div

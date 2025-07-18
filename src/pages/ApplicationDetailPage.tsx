@@ -69,14 +69,34 @@ export function ApplicationDetailPage() {
     }
   };
 
-  const getLatestCheck = (fonctId: string) => {
-    return sanityChecks
-      .filter((check) => check.fonctionnalite_id === fonctId)
+  // Nouvelle fonction qui retourne les derniers checks prod et preprod du jour pour une fonctionnalité
+  const getTodayChecksByEnv = (fonctId: string) => {
+    const checksForFonct = sanityChecks.filter(
+      (check) =>
+        check.fonctionnalite_id === fonctId &&
+        new Date(check.date_verification).toISOString().split("T")[0] === today
+    );
+
+    // Séparer prod et preprod d'après commentaire
+    const prodChecks = checksForFonct
+      .filter((c) => c.commentaire?.toLowerCase().includes("prod"))
       .sort(
         (a, b) =>
           new Date(b.date_verification).getTime() -
           new Date(a.date_verification).getTime()
-      )[0];
+      );
+    const preprodChecks = checksForFonct
+      .filter((c) => c.commentaire?.toLowerCase().includes("preprod"))
+      .sort(
+        (a, b) =>
+          new Date(b.date_verification).getTime() -
+          new Date(a.date_verification).getTime()
+      );
+
+    return {
+      prod: prodChecks[0],
+      preprod: preprodChecks[0],
+    };
   };
 
   if (loadingApp || loadingFonct) {
@@ -175,7 +195,10 @@ export function ApplicationDetailPage() {
                     Description
                   </th>
                   <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Dernier Check
+                    Dernier Check PROD
+                  </th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Dernier Check PREPROD
                   </th>
                   <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions Rapides
@@ -187,18 +210,66 @@ export function ApplicationDetailPage() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {fonctionnalites.map((fonct) => {
-                  const latestCheck = getLatestCheck(fonct.id);
+                  const { prod, preprod } = getTodayChecksByEnv(fonct.id);
+
+                  const renderStatus = (
+                    check: typeof prod | undefined,
+                    env: string
+                  ) => {
+                    const isPreprod = env.toLowerCase().includes("preprod");
+
+                    if (!check) {
+                      // Non vérifié aujourd’hui pour cet environnement
+                      return (
+                        // <span
+                        //   key={env}
+                        //   className={`inline-block w-3 h-3 rounded-full mx-1 ${
+                        //     isPreprod ? "bg-orange-400" : "bg-blue-400"
+                        //   }`}
+                        //   title={`Non vérifié aujourd’hui (${env})`}
+                        // />
+                        <span>-</span>
+                      );
+                    }
+
+                    return (
+                      <div
+                        key={env}
+                        className="inline-flex flex-col items-center mx-2"
+                        title={`${check.statut} (${env}) - ${new Date(
+                          check.date_verification
+                        ).toLocaleTimeString("fr-FR")}`}
+                      >
+                        <StatusBadge
+                          status={check.statut}
+                          size="sm"
+                          className={
+                            isPreprod ? "bg-orange-400" : "bg-blue-400"
+                          }
+                        />
+                        <span className="text-xs text-gray-500">
+                          {new Date(check.date_verification).toLocaleTimeString(
+                            "fr-FR"
+                          )}
+                        </span>
+                      </div>
+                    );
+                  };
+
                   return (
                     <tr key={fonct.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
-                          {!latestCheck ||
-                          new Date(latestCheck.date_verification)
-                            .toISOString()
-                            .split("T")[0] !== today ? (
+                          {!prod ? (
+                            <span
+                              className="w-2.5 h-2.5 rounded-full bg-blue-400"
+                              title="Non vérifié aujourd’hui en PROD"
+                            />
+                          ) : null}
+                          {!preprod ? (
                             <span
                               className="w-2.5 h-2.5 rounded-full bg-orange-400"
-                              title="Non vérifié aujourd’hui"
+                              title="Non vérifié aujourd’hui en PREPROD"
                             />
                           ) : null}
                           <span>{fonct.nom}</span>
@@ -209,24 +280,11 @@ export function ApplicationDetailPage() {
                           {fonct.description || "-"}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        {latestCheck ? (
-                          <div className="space-y-1">
-                            <StatusBadge
-                              status={latestCheck.statut}
-                              size="sm"
-                            />
-                            <div className="text-xs text-gray-500">
-                              {new Date(
-                                latestCheck.date_verification
-                              ).toLocaleDateString("fr-FR")}
-                            </div>
-                          </div>
-                        ) : (
-                          <span className="text-sm text-gray-400">
-                            Aucun check
-                          </span>
-                        )}
+                      <td className="px-6 py-4 text-center">
+                        {renderStatus(prod, "PROD")}
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        {renderStatus(preprod, "PREPROD")}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         <div className="flex justify-center space-x-2">
