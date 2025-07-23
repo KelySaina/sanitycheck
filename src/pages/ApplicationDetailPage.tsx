@@ -34,6 +34,16 @@ export function ApplicationDetailPage() {
     null
   );
 
+  const startSanityCheck = (
+    fonctId: string,
+    statut: "OK" | "NOT_OK",
+    env: "PROD" | "PREPROD"
+  ) => {
+    setCommentFonctId(fonctId);
+    setCommentStatus(statut);
+    setComment(`${env.toUpperCase()} - Thierry`);
+  };
+
   const application = applications.find((app) => app.id === id);
 
   const handleDeleteFonctionnalite = async (fonctId: string, nom: string) => {
@@ -79,14 +89,15 @@ export function ApplicationDetailPage() {
 
     // Séparer prod et preprod d'après commentaire
     const prodChecks = checksForFonct
-      .filter((c) => c.commentaire?.toLowerCase().includes("prod"))
+      .filter((c) => c.commentaire?.toLowerCase().startsWith("prod"))
       .sort(
         (a, b) =>
           new Date(b.date_verification).getTime() -
           new Date(a.date_verification).getTime()
       );
+
     const preprodChecks = checksForFonct
-      .filter((c) => c.commentaire?.toLowerCase().includes("preprod"))
+      .filter((c) => c.commentaire?.toLowerCase().startsWith("preprod"))
       .sort(
         (a, b) =>
           new Date(b.date_verification).getTime() -
@@ -213,7 +224,7 @@ export function ApplicationDetailPage() {
                   const { prod, preprod } = getTodayChecksByEnv(fonct.id);
 
                   const renderStatus = (
-                    check: typeof prod | undefined,
+                    check: typeof preprod | undefined,
                     env: string
                   ) => {
                     const isPreprod = env.toLowerCase().includes("preprod");
@@ -287,44 +298,142 @@ export function ApplicationDetailPage() {
                         {renderStatus(preprod, "PREPROD")}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <div className="flex justify-center space-x-2">
+                        {commentFonctId === fonct.id ? (
+                          <div>
+                            <div className="text-sm text-center font-medium text-gray-800">
+                              Commentaire pour {comment.split(" - ")[0]}{" "}
+                              {commentStatus}
+                            </div>
+                            <div className="mt-2 text-left">
+                              <textarea
+                                rows={2}
+                                className="w-full text-sm px-2 py-1 border border-gray-300 rounded-md"
+                                placeholder="Commentaire (optionnel)"
+                                value={comment}
+                                onChange={(e) => setComment(e.target.value)}
+                              />
+                              <div className="flex justify-end space-x-2 mt-2">
+                                <button
+                                  className="text-gray-500 hover:text-gray-700 text-sm"
+                                  onClick={() => {
+                                    setCommentFonctId(null);
+                                    setComment("PROD - Thierry");
+                                  }}
+                                >
+                                  Annuler
+                                </button>
+                                <button
+                                  className="text-blue-600 hover:text-blue-800 text-sm"
+                                  onClick={() =>
+                                    handleQuickSanityCheck(
+                                      fonct.id,
+                                      commentStatus!,
+                                      comment
+                                    )
+                                  }
+                                  disabled={addingCheckId === fonct.id}
+                                >
+                                  {addingCheckId === fonct.id ? (
+                                    <LoadingSpinner size="sm" />
+                                  ) : (
+                                    "Valider"
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex flex-wrap justify-center gap-2">
+                            {/* Boutons PROD */}
+                            <button
+                              onClick={() =>
+                                startSanityCheck(fonct.id, "OK", "PROD")
+                              }
+                              disabled={addingCheckId === fonct.id}
+                              className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded hover:bg-green-200 transition-colors"
+                            >
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              PROD OK
+                            </button>
+                            <button
+                              onClick={() =>
+                                startSanityCheck(fonct.id, "NOT_OK", "PROD")
+                              }
+                              disabled={addingCheckId === fonct.id}
+                              className="inline-flex items-center px-2 py-1 bg-red-100 text-red-800 text-xs rounded hover:bg-red-200 transition-colors"
+                            >
+                              <XCircle className="h-3 w-3 mr-1" />
+                              PROD NOT OK
+                            </button>
+
+                            {/* Boutons PREPROD */}
+                            <button
+                              onClick={() =>
+                                startSanityCheck(fonct.id, "OK", "PREPROD")
+                              }
+                              disabled={addingCheckId === fonct.id}
+                              className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded hover:bg-green-200 transition-colors"
+                            >
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              PREPROD OK
+                            </button>
+                            <button
+                              onClick={() =>
+                                startSanityCheck(fonct.id, "NOT_OK", "PREPROD")
+                              }
+                              disabled={addingCheckId === fonct.id}
+                              className="inline-flex items-center px-2 py-1 bg-red-100 text-red-800 text-xs rounded hover:bg-red-200 transition-colors"
+                            >
+                              <XCircle className="h-3 w-3 mr-1" />
+                              PREPROD NOT OK
+                            </button>
+                          </div>
+                        )}
+
+                        {/* <div className="flex flex-wrap justify-center gap-2">
                           <button
-                            onClick={() => {
-                              setCommentFonctId(fonct.id);
-                              setCommentStatus("OK");
-                              setComment("PROD -Thierry");
-                            }}
+                            onClick={() =>
+                              startSanityCheck(fonct.id, "OK", "PROD")
+                            }
                             disabled={addingCheckId === fonct.id}
                             className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded hover:bg-green-200 transition-colors"
                           >
-                            {addingCheckId === fonct.id ? (
-                              <LoadingSpinner size="sm" />
-                            ) : (
-                              <>
-                                <CheckCircle className="h-3 w-3 mr-1" />
-                                OK
-                              </>
-                            )}
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            PROD OK
                           </button>
                           <button
-                            onClick={() => {
-                              setCommentFonctId(fonct.id);
-                              setCommentStatus("NOT_OK");
-                              setComment("PROD -Thierry");
-                            }}
+                            onClick={() =>
+                              startSanityCheck(fonct.id, "NOT_OK", "PROD")
+                            }
                             disabled={addingCheckId === fonct.id}
                             className="inline-flex items-center px-2 py-1 bg-red-100 text-red-800 text-xs rounded hover:bg-red-200 transition-colors"
                           >
-                            {addingCheckId === fonct.id ? (
-                              <LoadingSpinner size="sm" />
-                            ) : (
-                              <>
-                                <XCircle className="h-3 w-3 mr-1" />
-                                NOT OK
-                              </>
-                            )}
+                            <XCircle className="h-3 w-3 mr-1" />
+                            PROD NOT OK
+                          </button>
+
+                          <button
+                            onClick={() =>
+                              startSanityCheck(fonct.id, "OK", "PREPROD")
+                            }
+                            disabled={addingCheckId === fonct.id}
+                            className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded hover:bg-green-200 transition-colors"
+                          >
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            PREPROD OK
+                          </button>
+                          <button
+                            onClick={() =>
+                              startSanityCheck(fonct.id, "NOT_OK", "PREPROD")
+                            }
+                            disabled={addingCheckId === fonct.id}
+                            className="inline-flex items-center px-2 py-1 bg-red-100 text-red-800 text-xs rounded hover:bg-red-200 transition-colors"
+                          >
+                            <XCircle className="h-3 w-3 mr-1" />
+                            PREPROD NOT OK
                           </button>
                         </div>
+
                         {commentFonctId === fonct.id && (
                           <div className="mt-2 text-left">
                             <textarea
@@ -339,7 +448,7 @@ export function ApplicationDetailPage() {
                                 className="text-gray-500 hover:text-gray-700 text-sm"
                                 onClick={() => {
                                   setCommentFonctId(null);
-                                  setComment("PROD -Thierry");
+                                  setComment("PROD - Thierry");
                                 }}
                               >
                                 Annuler
@@ -363,8 +472,9 @@ export function ApplicationDetailPage() {
                               </button>
                             </div>
                           </div>
-                        )}
+                        )} */}
                       </td>
+
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end space-x-2">
                           <Link
