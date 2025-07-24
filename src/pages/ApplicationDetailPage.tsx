@@ -220,177 +220,183 @@ export function ApplicationDetailPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {fonctionnalites.map((fonct) => {
-                  const { prod, preprod } = getTodayChecksByEnv(fonct.id);
+                {fonctionnalites
+                  .filter((fonct) => fonct.nom.toLowerCase().includes("TNR"))
+                  .map((fonct) => {
+                    const { prod, preprod } = getTodayChecksByEnv(fonct.id);
 
-                  const renderStatus = (
-                    check: typeof preprod | undefined,
-                    env: string
-                  ) => {
-                    const isPreprod = env.toLowerCase().includes("preprod");
+                    const renderStatus = (
+                      check: typeof preprod | undefined,
+                      env: string
+                    ) => {
+                      const isPreprod = env.toLowerCase().includes("preprod");
 
-                    if (!check) {
-                      // Non vérifié aujourd’hui pour cet environnement
+                      if (!check) {
+                        // Non vérifié aujourd’hui pour cet environnement
+                        return (
+                          // <span
+                          //   key={env}
+                          //   className={`inline-block w-3 h-3 rounded-full mx-1 ${
+                          //     isPreprod ? "bg-orange-400" : "bg-blue-400"
+                          //   }`}
+                          //   title={`Non vérifié aujourd’hui (${env})`}
+                          // />
+                          <span>-</span>
+                        );
+                      }
+
                       return (
-                        // <span
-                        //   key={env}
-                        //   className={`inline-block w-3 h-3 rounded-full mx-1 ${
-                        //     isPreprod ? "bg-orange-400" : "bg-blue-400"
-                        //   }`}
-                        //   title={`Non vérifié aujourd’hui (${env})`}
-                        // />
-                        <span>-</span>
+                        <div
+                          key={env}
+                          className="inline-flex flex-col items-center mx-2"
+                          title={`${check.statut} (${env}) - ${new Date(
+                            check.date_verification
+                          ).toLocaleTimeString("fr-FR")}`}
+                        >
+                          <StatusBadge
+                            status={check.statut}
+                            size="sm"
+                            className={
+                              isPreprod ? "bg-orange-400" : "bg-blue-400"
+                            }
+                          />
+                          <span className="text-xs text-gray-500">
+                            {new Date(
+                              check.date_verification
+                            ).toLocaleTimeString("fr-FR")}
+                          </span>
+                        </div>
                       );
-                    }
+                    };
 
                     return (
-                      <div
-                        key={env}
-                        className="inline-flex flex-col items-center mx-2"
-                        title={`${check.statut} (${env}) - ${new Date(
-                          check.date_verification
-                        ).toLocaleTimeString("fr-FR")}`}
-                      >
-                        <StatusBadge
-                          status={check.statut}
-                          size="sm"
-                          className={
-                            isPreprod ? "bg-orange-400" : "bg-blue-400"
-                          }
-                        />
-                        <span className="text-xs text-gray-500">
-                          {new Date(check.date_verification).toLocaleTimeString(
-                            "fr-FR"
-                          )}
-                        </span>
-                      </div>
-                    );
-                  };
-
-                  return (
-                    <tr key={fonct.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
-                          {!prod ? (
-                            <span
-                              className="w-2.5 h-2.5 rounded-full bg-blue-400"
-                              title="Non vérifié aujourd’hui en PROD"
-                            />
-                          ) : null}
-                          {!preprod ? (
-                            <span
-                              className="w-2.5 h-2.5 rounded-full bg-orange-400"
-                              title="Non vérifié aujourd’hui en PREPROD"
-                            />
-                          ) : null}
-                          <span>{fonct.nom}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-600 max-w-xs truncate">
-                          {fonct.description || "-"}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        {renderStatus(prod, "PROD")}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        {renderStatus(preprod, "PREPROD")}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        {commentFonctId === fonct.id ? (
-                          <div>
-                            <div className="text-sm text-center font-medium text-gray-800">
-                              Commentaire pour {comment.split(" - ")[0]}{" "}
-                              {commentStatus}
-                            </div>
-                            <div className="mt-2 text-left">
-                              <textarea
-                                rows={2}
-                                className="w-full text-sm px-2 py-1 border border-gray-300 rounded-md"
-                                placeholder="Commentaire (optionnel)"
-                                value={comment}
-                                onChange={(e) => setComment(e.target.value)}
+                      <tr key={fonct.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
+                            {!prod ? (
+                              <span
+                                className="w-2.5 h-2.5 rounded-full bg-blue-400"
+                                title="Non vérifié aujourd’hui en PROD"
                               />
-                              <div className="flex justify-end space-x-2 mt-2">
-                                <button
-                                  className="text-gray-500 hover:text-gray-700 text-sm"
-                                  onClick={() => {
-                                    setCommentFonctId(null);
-                                    setComment("PROD - Thierry");
-                                  }}
-                                >
-                                  Annuler
-                                </button>
-                                <button
-                                  className="text-blue-600 hover:text-blue-800 text-sm"
-                                  onClick={() =>
-                                    handleQuickSanityCheck(
-                                      fonct.id,
-                                      commentStatus!,
-                                      comment
-                                    )
-                                  }
-                                  disabled={addingCheckId === fonct.id}
-                                >
-                                  {addingCheckId === fonct.id ? (
-                                    <LoadingSpinner size="sm" />
-                                  ) : (
-                                    "Valider"
-                                  )}
-                                </button>
+                            ) : null}
+                            {!preprod ? (
+                              <span
+                                className="w-2.5 h-2.5 rounded-full bg-orange-400"
+                                title="Non vérifié aujourd’hui en PREPROD"
+                              />
+                            ) : null}
+                            <span>{fonct.nom}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-600 max-w-xs truncate">
+                            {fonct.description || "-"}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          {renderStatus(prod, "PROD")}
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          {renderStatus(preprod, "PREPROD")}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          {commentFonctId === fonct.id ? (
+                            <div>
+                              <div className="text-sm text-center font-medium text-gray-800">
+                                Commentaire pour {comment.split(" - ")[0]}{" "}
+                                {commentStatus}
+                              </div>
+                              <div className="mt-2 text-left">
+                                <textarea
+                                  rows={2}
+                                  className="w-full text-sm px-2 py-1 border border-gray-300 rounded-md"
+                                  placeholder="Commentaire (optionnel)"
+                                  value={comment}
+                                  onChange={(e) => setComment(e.target.value)}
+                                />
+                                <div className="flex justify-end space-x-2 mt-2">
+                                  <button
+                                    className="text-gray-500 hover:text-gray-700 text-sm"
+                                    onClick={() => {
+                                      setCommentFonctId(null);
+                                      setComment("PROD - Thierry");
+                                    }}
+                                  >
+                                    Annuler
+                                  </button>
+                                  <button
+                                    className="text-blue-600 hover:text-blue-800 text-sm"
+                                    onClick={() =>
+                                      handleQuickSanityCheck(
+                                        fonct.id,
+                                        commentStatus!,
+                                        comment
+                                      )
+                                    }
+                                    disabled={addingCheckId === fonct.id}
+                                  >
+                                    {addingCheckId === fonct.id ? (
+                                      <LoadingSpinner size="sm" />
+                                    ) : (
+                                      "Valider"
+                                    )}
+                                  </button>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ) : (
-                          <div className="grid grid-cols-2 gap-2">
-                            {/* Boutons PROD */}
-                            <button
-                              onClick={() =>
-                                startSanityCheck(fonct.id, "OK", "PROD")
-                              }
-                              disabled={addingCheckId === fonct.id}
-                              className="inline-flex items-center justify-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded hover:bg-green-200 transition-colors break-words whitespace-normal text-center w-full"
-                            >
-                              {/* <CheckCircle className="h-3 w-3 mr-1" /> */}
-                              PROD OK
-                            </button>
-                            <button
-                              onClick={() =>
-                                startSanityCheck(fonct.id, "NOT_OK", "PROD")
-                              }
-                              disabled={addingCheckId === fonct.id}
-                              className="inline-flex items-center justify-center px-2 py-1 bg-red-100 text-red-800 text-xs rounded hover:bg-red-200 transition-colors break-words whitespace-normal text-center w-full"
-                            >
-                              {/* <XCircle className="h-3 w-3 mr-1" /> */}
-                              PROD NOT OK
-                            </button>
+                          ) : (
+                            <div className="grid grid-cols-2 gap-2">
+                              {/* Boutons PROD */}
+                              <button
+                                onClick={() =>
+                                  startSanityCheck(fonct.id, "OK", "PROD")
+                                }
+                                disabled={addingCheckId === fonct.id}
+                                className="inline-flex items-center justify-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded hover:bg-green-200 transition-colors break-words whitespace-normal text-center w-full"
+                              >
+                                {/* <CheckCircle className="h-3 w-3 mr-1" /> */}
+                                PROD OK
+                              </button>
+                              <button
+                                onClick={() =>
+                                  startSanityCheck(fonct.id, "NOT_OK", "PROD")
+                                }
+                                disabled={addingCheckId === fonct.id}
+                                className="inline-flex items-center justify-center px-2 py-1 bg-red-100 text-red-800 text-xs rounded hover:bg-red-200 transition-colors break-words whitespace-normal text-center w-full"
+                              >
+                                {/* <XCircle className="h-3 w-3 mr-1" /> */}
+                                PROD NOT OK
+                              </button>
 
-                            {/* Boutons PREPROD */}
-                            <button
-                              onClick={() =>
-                                startSanityCheck(fonct.id, "OK", "PREPROD")
-                              }
-                              disabled={addingCheckId === fonct.id}
-                              className="inline-flex items-center justify-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded hover:bg-green-200 transition-colors break-words whitespace-normal text-center w-full"
-                            >
-                              {/* <CheckCircle className="h-3 w-3 mr-1" /> */}
-                              PREPROD OK
-                            </button>
-                            <button
-                              onClick={() =>
-                                startSanityCheck(fonct.id, "NOT_OK", "PREPROD")
-                              }
-                              disabled={addingCheckId === fonct.id}
-                              className="inline-flex items-center justify-center px-2 py-1 bg-red-100 text-red-800 text-xs rounded hover:bg-red-200 transition-colors break-words whitespace-normal text-center w-full"
-                            >
-                              {/* <XCircle className="h-3 w-3 mr-1" /> */}
-                              PREPROD NOT OK
-                            </button>
-                          </div>
-                        )}
+                              {/* Boutons PREPROD */}
+                              <button
+                                onClick={() =>
+                                  startSanityCheck(fonct.id, "OK", "PREPROD")
+                                }
+                                disabled={addingCheckId === fonct.id}
+                                className="inline-flex items-center justify-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded hover:bg-green-200 transition-colors break-words whitespace-normal text-center w-full"
+                              >
+                                {/* <CheckCircle className="h-3 w-3 mr-1" /> */}
+                                PREPROD OK
+                              </button>
+                              <button
+                                onClick={() =>
+                                  startSanityCheck(
+                                    fonct.id,
+                                    "NOT_OK",
+                                    "PREPROD"
+                                  )
+                                }
+                                disabled={addingCheckId === fonct.id}
+                                className="inline-flex items-center justify-center px-2 py-1 bg-red-100 text-red-800 text-xs rounded hover:bg-red-200 transition-colors break-words whitespace-normal text-center w-full"
+                              >
+                                {/* <XCircle className="h-3 w-3 mr-1" /> */}
+                                PREPROD NOT OK
+                              </button>
+                            </div>
+                          )}
 
-                        {/* <div className="flex flex-wrap justify-center gap-2">
+                          {/* <div className="flex flex-wrap justify-center gap-2">
                           <button
                             onClick={() =>
                               startSanityCheck(fonct.id, "OK", "PROD")
@@ -473,36 +479,36 @@ export function ApplicationDetailPage() {
                             </div>
                           </div>
                         )} */}
-                      </td>
+                        </td>
 
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex justify-end space-x-2">
-                          <Link
-                            to={`/fonctionnalites/${application.id}/${fonct.id}/edit`}
-                            className="text-yellow-600 hover:text-yellow-900 p-1"
-                            title="Modifier"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Link>
-                          <button
-                            onClick={() =>
-                              handleDeleteFonctionnalite(fonct.id, fonct.nom)
-                            }
-                            className="text-red-600 hover:text-red-900 p-1"
-                            disabled={deletingId === fonct.id}
-                            title="Supprimer"
-                          >
-                            {deletingId === fonct.id ? (
-                              <LoadingSpinner size="sm" />
-                            ) : (
-                              <Trash2 className="h-4 w-4" />
-                            )}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex justify-end space-x-2">
+                            <Link
+                              to={`/fonctionnalites/${application.id}/${fonct.id}/edit`}
+                              className="text-yellow-600 hover:text-yellow-900 p-1"
+                              title="Modifier"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Link>
+                            <button
+                              onClick={() =>
+                                handleDeleteFonctionnalite(fonct.id, fonct.nom)
+                              }
+                              className="text-red-600 hover:text-red-900 p-1"
+                              disabled={deletingId === fonct.id}
+                              title="Supprimer"
+                            >
+                              {deletingId === fonct.id ? (
+                                <LoadingSpinner size="sm" />
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           </div>
