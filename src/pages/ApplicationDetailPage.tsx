@@ -221,7 +221,7 @@ export function ApplicationDetailPage() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {fonctionnalites
-                  .filter((fonct) => fonct.nom.toLowerCase().includes("TNR"))
+                  .filter((fonct) => fonct.nom.includes("TNR"))
                   .map((fonct) => {
                     const { prod, preprod } = getTodayChecksByEnv(fonct.id);
 

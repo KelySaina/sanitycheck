@@ -86,12 +86,14 @@ export function HomePage() {
 
   // 4. Construire map fonctionnalites par application pour affichage détaillé
   const fonctionnalitesParApp: Record<string, typeof fonctionnalites> =
-    fonctionnalites.reduce((acc, f) => {
-      const appId = f.application_id;
-      if (!acc[appId]) acc[appId] = [];
-      acc[appId].push(f);
-      return acc;
-    }, {} as Record<string, typeof fonctionnalites>);
+    fonctionnalites
+      .filter((fonct) => fonct.nom.includes("TNR"))
+      .reduce((acc, f) => {
+        const appId = f.application_id;
+        if (!acc[appId]) acc[appId] = [];
+        acc[appId].push(f);
+        return acc;
+      }, {} as Record<string, typeof fonctionnalites>);
 
   if (loadingApps || loadingFonctionnalites || loadingChecks) {
     return (
