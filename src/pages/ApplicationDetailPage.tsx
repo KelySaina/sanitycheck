@@ -343,16 +343,16 @@ export function ApplicationDetailPage() {
                             </div>
                           </div>
                         ) : (
-                          <div className="flex flex-wrap justify-center gap-2">
+                          <div className="grid grid-cols-2 gap-2">
                             {/* Boutons PROD */}
                             <button
                               onClick={() =>
                                 startSanityCheck(fonct.id, "OK", "PROD")
                               }
                               disabled={addingCheckId === fonct.id}
-                              className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded hover:bg-green-200 transition-colors"
+                              className="inline-flex items-center justify-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded hover:bg-green-200 transition-colors break-words whitespace-normal text-center w-full"
                             >
-                              <CheckCircle className="h-3 w-3 mr-1" />
+                              {/* <CheckCircle className="h-3 w-3 mr-1" /> */}
                               PROD OK
                             </button>
                             <button
@@ -360,9 +360,9 @@ export function ApplicationDetailPage() {
                                 startSanityCheck(fonct.id, "NOT_OK", "PROD")
                               }
                               disabled={addingCheckId === fonct.id}
-                              className="inline-flex items-center px-2 py-1 bg-red-100 text-red-800 text-xs rounded hover:bg-red-200 transition-colors"
+                              className="inline-flex items-center justify-center px-2 py-1 bg-red-100 text-red-800 text-xs rounded hover:bg-red-200 transition-colors break-words whitespace-normal text-center w-full"
                             >
-                              <XCircle className="h-3 w-3 mr-1" />
+                              {/* <XCircle className="h-3 w-3 mr-1" /> */}
                               PROD NOT OK
                             </button>
 
@@ -372,9 +372,9 @@ export function ApplicationDetailPage() {
                                 startSanityCheck(fonct.id, "OK", "PREPROD")
                               }
                               disabled={addingCheckId === fonct.id}
-                              className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded hover:bg-green-200 transition-colors"
+                              className="inline-flex items-center justify-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded hover:bg-green-200 transition-colors break-words whitespace-normal text-center w-full"
                             >
-                              <CheckCircle className="h-3 w-3 mr-1" />
+                              {/* <CheckCircle className="h-3 w-3 mr-1" /> */}
                               PREPROD OK
                             </button>
                             <button
@@ -382,9 +382,9 @@ export function ApplicationDetailPage() {
                                 startSanityCheck(fonct.id, "NOT_OK", "PREPROD")
                               }
                               disabled={addingCheckId === fonct.id}
-                              className="inline-flex items-center px-2 py-1 bg-red-100 text-red-800 text-xs rounded hover:bg-red-200 transition-colors"
+                              className="inline-flex items-center justify-center px-2 py-1 bg-red-100 text-red-800 text-xs rounded hover:bg-red-200 transition-colors break-words whitespace-normal text-center w-full"
                             >
-                              <XCircle className="h-3 w-3 mr-1" />
+                              {/* <XCircle className="h-3 w-3 mr-1" /> */}
                               PREPROD NOT OK
                             </button>
                           </div>
