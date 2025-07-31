@@ -1,0 +1,27 @@
+name: Auto Deploy to Self-Hosted Server
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Build and Deploy
+    runs-on: self-hosted
+    labels: [sanitycheck]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build Docker image
+        run: docker build -t sanitycheck:latest .
+
+      - name: Stop and remove old container (if running)
+        run: |
+          docker stop sanitycheck || true
+          docker rm sanitycheck || true
+
+      - name: Run new container
+        run: docker run -d --name sanitycheck -p 1115:80 sanitycheck:latest
