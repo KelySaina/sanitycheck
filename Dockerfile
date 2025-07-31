@@ -3,6 +3,7 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
+COPY .env .env
 COPY package*.json ./
 COPY tsconfig*.json ./
 COPY vite.config.* ./
