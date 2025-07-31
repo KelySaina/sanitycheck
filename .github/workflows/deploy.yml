@@ -17,6 +17,9 @@ jobs:
       - name: Build Docker image
         run: docker build -t sanitycheck:latest .
 
+      - name: Debug image content
+        run: docker run --rm sanitycheck:latest ls -l /usr/share/nginx/html
+
       - name: Stop and remove old container (if running)
         run: |
           docker stop sanitycheck || true
