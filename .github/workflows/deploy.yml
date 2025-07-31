@@ -8,8 +8,7 @@ on:
 jobs:
   deploy:
     name: Build and Deploy
-    runs-on: self-hosted
-    labels: [sanitycheck]
+    runs-on: [self-hosted, sanitycheck]
 
     steps:
       - name: Checkout code
