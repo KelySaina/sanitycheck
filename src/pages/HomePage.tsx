@@ -116,9 +116,6 @@ export function HomePage() {
         <p className="text-xl text-gray-600">
           Surveillez l'état de santé de vos applications métiers
         </p>
-        <p className="text-lg text-blue-600 font-semibold">
-          Simplifiez la saisie et boostez la fiabilité de vos données !
-        </p>
       </div>
 
       <div className="flex flex-col md:flex-row gap-6">
