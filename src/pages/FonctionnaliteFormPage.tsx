@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, Trash2 } from "lucide-react";
 import { useApplications } from "../hooks/useApplications";
 import { useFonctionnalites } from "../hooks/useFonctionnalites";
 import { LoadingSpinner } from "../components/LoadingSpinner";
@@ -17,6 +17,7 @@ export function FonctionnaliteFormPage() {
     fonctionnalites,
     createFonctionnalite,
     updateFonctionnalite,
+    deleteFonctionnalite,
     loading: fonctionnalitesLoading,
   } = useFonctionnalites();
   const [formData, setFormData] = useState({ nom: "", description: "" });
@@ -24,6 +25,7 @@ export function FonctionnaliteFormPage() {
   const [error, setError] = useState<string | null>(null);
 
   const isEditing = !!id && id !== "new";
+  const [deleting, setDeleting] = useState(false);
 
   const application = applications.find((app) => app.id === applicationId);
   const fonctionnalite = fonctionnalites.find((f) => f.id === id);
@@ -74,6 +76,24 @@ export function FonctionnaliteFormPage() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!id || !fonctionnalite) return;
+    const confirmDelete = confirm(
+      `Êtes-vous sûr de vouloir supprimer la fonctionnalité "${fonctionnalite.nom}" ?`
+    );
+    if (!confirmDelete) return;
+
+    try {
+      setDeleting(true);
+      await deleteFonctionnalite(id);
+      navigate(`/applications/${applicationId}`);
+    } catch (err) {
+      setError("Erreur lors de la suppression de la fonctionnalité.");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   if ((appsLoading || fonctionnalitesLoading) && isEditing) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -114,9 +134,24 @@ export function FonctionnaliteFormPage() {
       </div>
 
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">
-          {isEditing ? "Modifier la fonctionnalité" : "Nouvelle fonctionnalité"}
-        </h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-900 mb-6">
+            {isEditing
+              ? "Modifier la fonctionnalité"
+              : "Nouvelle fonctionnalité"}
+          </h1>
+          {isEditing && (
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={deleting}
+              className="px-4 py-2 border border-red-300 text-red-600 rounded-md hover:bg-red-50 transition-colors disabled:opacity-50"
+            >
+              {deleting ? <LoadingSpinner size="sm" className="mr-2" /> : null}
+              <Trash2 className="h-4 w-4" />
+            </button>
+          )}
+        </div>
 
         {error && <ErrorMessage message={error} className="mb-6" />}
 

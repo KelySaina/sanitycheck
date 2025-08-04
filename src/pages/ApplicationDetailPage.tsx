@@ -1,19 +1,14 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import {
-  Plus,
-  Edit,
-  Trash2,
-  ArrowLeft,
-  CheckCircle,
-  XCircle,
-} from "lucide-react";
+import { Plus, Edit, Trash2, ArrowLeft, EyeIcon } from "lucide-react";
 import { useApplications } from "../hooks/useApplications";
 import { useFonctionnalites } from "../hooks/useFonctionnalites";
 import { useSanityChecks } from "../hooks/useSanityChecks";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ErrorMessage } from "../components/ErrorMessage";
 import { StatusBadge } from "../components/StatusBadge";
+import { Dialog } from "@headlessui/react";
+import { useEffect } from "react";
 
 export function ApplicationDetailPage() {
   const today = new Date().toISOString().split("T")[0];
@@ -33,6 +28,9 @@ export function ApplicationDetailPage() {
   const [commentStatus, setCommentStatus] = useState<"OK" | "NOT_OK" | null>(
     null
   );
+
+  const [showAllModal, setShowAllModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const startSanityCheck = (
     fonctId: string,
@@ -137,6 +135,79 @@ export function ApplicationDetailPage() {
 
   return (
     <div className="space-y-6">
+      <Dialog
+        open={showAllModal}
+        onClose={() => setShowAllModal(false)}
+        className="fixed inset-0 z-50 overflow-y-auto"
+      >
+        <div className="min-h-screen px-4 text-center bg-black/30">
+          <span
+            className="inline-block h-screen align-middle"
+            aria-hidden="true"
+          >
+            &#8203;
+          </span>
+          <div className="inline-block w-full max-w-4xl p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-xl">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">
+                {application.nom} - Toutes les fonctionnalités (
+                {
+                  fonctionnalites.filter((fonct) =>
+                    fonct.nom.toLowerCase().includes(searchTerm.toLowerCase())
+                  ).length
+                }
+                )
+              </h3>
+              <button
+                onClick={() => setShowAllModal(false)}
+                className="text-gray-500 hover:text-gray-800"
+              >
+                ✖
+              </button>
+            </div>
+
+            <input
+              type="text"
+              placeholder="Rechercher par nom..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full border border-gray-300 rounded-md p-2 mb-4"
+            />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 max-h-[60vh] overflow-y-auto">
+              {fonctionnalites
+                .filter((fonct) =>
+                  fonct.nom.toLowerCase().includes(searchTerm.toLowerCase())
+                )
+                .map((fonct) => (
+                  <div
+                    key={fonct.id}
+                    className="border rounded-md p-4 shadow-sm bg-gray-50 hover:bg-gray-100 transition"
+                  >
+                    <Link
+                      to={`/fonctionnalites/${application.id}/${fonct.id}/edit`}
+                    >
+                      <h4 className="font-semibold text-gray-800 mb-1">
+                        {fonct.nom}
+                      </h4>
+                      <p className="text-sm text-gray-600">
+                        {fonct.description || "-"}
+                      </p>
+                    </Link>
+                  </div>
+                ))}
+              {fonctionnalites.filter((fonct) =>
+                fonct.nom.toLowerCase().includes(searchTerm.toLowerCase())
+              ).length === 0 && (
+                <p className="text-sm text-gray-500 col-span-full text-center">
+                  Aucune fonctionnalité ne correspond à cette recherche.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      </Dialog>
+
       <div className="flex items-center space-x-4">
         <Link
           to="/applications"
@@ -172,6 +243,13 @@ export function ApplicationDetailPage() {
           <h2 className="text-xl font-semibold text-gray-900">
             Fonctionnalités
           </h2>
+          <button
+            onClick={() => setShowAllModal(true)}
+            className="text-md text-blue-600 hover:underline ml-4 flex justify center align-items-center gap-2"
+          >
+            <EyeIcon /> <span>Voir toutes les fonctionnalités</span>
+          </button>
+
           <Link
             to={`/applications/${id}/fonctionnalites/new`}
             className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
