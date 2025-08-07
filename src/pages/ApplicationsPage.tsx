@@ -4,10 +4,20 @@ import { Plus, Edit, Trash2, ListCollapse, AppWindow } from "lucide-react";
 import { useApplications } from "../hooks/useApplications";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ErrorMessage } from "../components/ErrorMessage";
+import { useFonctionnalites } from "../hooks/useFonctionnalites";
+import { Fonctionnalite } from "../lib/database.types";
 
 export function ApplicationsPage() {
+  const { fonctionnalites } = useFonctionnalites();
   const { applications, loading, error, deleteApplication } = useApplications();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const fonctionnalitesByApp = fonctionnalites.reduce((acc, fct) => {
+    const appId = fct.application_id;
+    if (!acc[appId]) acc[appId] = [];
+    acc[appId].push(fct);
+    return acc;
+  }, {} as Record<string, Fonctionnalite[]>);
 
   const handleDelete = async (id: string, nom: string) => {
     if (
@@ -72,6 +82,9 @@ export function ApplicationsPage() {
                   Nom
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Fonctionnalités couvertes
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Description
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -92,12 +105,18 @@ export function ApplicationsPage() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm text-gray-600 max-w-xs truncate">
+                      {fonctionnalitesByApp[app.id]?.length || 0}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-gray-600 max-w-xs truncate">
                       {app.description || "-"}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {new Date(app.created_at).toLocaleDateString("fr-FR")}
                   </td>
+
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end space-x-2">
                       <Link

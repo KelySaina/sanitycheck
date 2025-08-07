@@ -8,7 +8,6 @@ import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ErrorMessage } from "../components/ErrorMessage";
 import { StatusBadge } from "../components/StatusBadge";
 import { Dialog } from "@headlessui/react";
-import { useEffect } from "react";
 
 export function ApplicationDetailPage() {
   const today = new Date().toISOString().split("T")[0];
@@ -222,7 +221,8 @@ export function ApplicationDetailPage() {
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              {application.nom}
+              {application.nom} - {fonctionnalites.length} fonctionnalités
+              couvertes par les tests
             </h1>
             {application.description && (
               <p className="text-gray-600">{application.description}</p>
